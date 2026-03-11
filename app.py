@@ -71,6 +71,7 @@ if prompt := st.chat_input("Ask anything..."):
                     for m in st.session_state.messages
                 ]
             ],
+            # Use llama-3.1-8b-instant => if hit free rate limit
             model="llama-3.3-70b-versatile",
         )
         

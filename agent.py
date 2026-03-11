@@ -1,11 +1,14 @@
 import streamlit as st
 import os
-from google import genai
+from groq import Groq
 
-# API key from Streamlit secrets
-client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
+# Use Streamlit secrets if available, else use local env variable
+api_key = st.secrets["GROQ_API_KEY"] if "GROQ_API_KEY" in st.secrets else os.getenv("GROQ_API_KEY")
 
-st.title("Nova AI")
+# Initialize the Groq client
+client = Groq(api_key=api_key)
+
+st.title("Nova AI (Agent)")
 
 user_input = st.chat_input("Ask something")
 
@@ -13,10 +16,13 @@ if user_input:
     with st.chat_message("user"):
         st.write(user_input)
 
-    response = client.models.generate_content(
-        model="gemini-3.1-flash-lite",
-        contents=user_input
+    # Use Groq to generate a response
+    chat_completion = client.chat.completions.create(
+        messages=[{"role": "user", "content": user_input}],
+        model="llama-3.3-70b-versatile",
     )
 
+    response_text = chat_completion.choices[0].message.content
+
     with st.chat_message("assistant"):
-        st.write(response.text)
+        st.write(response_text)
