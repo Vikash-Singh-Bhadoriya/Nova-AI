@@ -1,19 +1,23 @@
 import streamlit as st
-from google import genai
+from groq import Groq
 from dotenv import load_dotenv
 import os
 
 # Load local environment if available (.env file)
 load_dotenv()
+
 # Try to get API key from Streamlit secrets first (Cloud), fallback to os.getenv (Local)
 try:
-    api_key = st.secrets["GOOGLE_API_KEY"]
+    api_key = st.secrets["GROQ_API_KEY"]
 except (FileNotFoundError, KeyError):
-    api_key = os.getenv("GOOGLE_API_KEY")
+    api_key = os.getenv("GROQ_API_KEY")
+
 if not api_key:
-    st.error("API Key not found. Please set GOOGLE_API_KEY in Streamlit secrets or .env file.")
+    st.error("API Key not found. Please set GROQ_API_KEY in Streamlit secrets or .env file.")
     st.stop()
-client = genai.Client(api_key=api_key)
+
+# Initialize Groq client
+client = Groq(api_key=api_key)
 
 # Page settings
 st.set_page_config(
@@ -31,7 +35,7 @@ with st.sidebar:
         st.session_state.messages = []
 
     st.markdown("---")
-    st.markdown("Model: Gemini 2.5 Flash")
+    st.markdown("Model: Llama 3.3 70B (via Groq)")
 
 # Title
 st.title("🤖 NovaAI Chat")
@@ -54,13 +58,23 @@ if prompt := st.chat_input("Ask anything..."):
 
     # loading spinner
     with st.spinner("NovaAI is thinking..."):
-        response = client.models.generate_content(
-            model="gemini-2.5-flash-lite",
-            contents=prompt
+        # Use Groq to generate the response
+        chat_completion = client.chat.completions.create(
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are NovaAI, a helpful personal AI agent."
+                },
+                # Pass the conversation history
+                *[
+                    {"role": m["role"], "content": m["content"]}
+                    for m in st.session_state.messages
+                ]
+            ],
+            model="llama-3.3-70b-versatile",
         )
-
-        answer = response.text
         
+        answer = chat_completion.choices[0].message.content
 
     # AI message
     with st.chat_message("assistant"):
