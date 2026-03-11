@@ -3,10 +3,17 @@ from google import genai
 from dotenv import load_dotenv
 import os
 
-# Load environment
+# Load local environment if available (.env file)
 load_dotenv()
-
-client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
+# Try to get API key from Streamlit secrets first (Cloud), fallback to os.getenv (Local)
+try:
+    api_key = st.secrets["GOOGLE_API_KEY"]
+except (FileNotFoundError, KeyError):
+    api_key = os.getenv("GOOGLE_API_KEY")
+if not api_key:
+    st.error("API Key not found. Please set GOOGLE_API_KEY in Streamlit secrets or .env file.")
+    st.stop()
+client = genai.Client(api_key=api_key)
 
 # Page settings
 st.set_page_config(

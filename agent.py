@@ -1,21 +1,22 @@
-from dotenv import load_dotenv
+import streamlit as st
 import os
 from google import genai
 
-# load api key
-load_dotenv()
-client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
+# API key from Streamlit secrets
+client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
 
-print("Gemini Agent Ready (type exit to quit)")
+st.title("Nova AI")
 
-while True:
-    user_input = input("You: ")
+user_input = st.chat_input("Ask something")
 
-    if user_input.lower() == "exit":
-        break
+if user_input:
+    with st.chat_message("user"):
+        st.write(user_input)
 
     response = client.models.generate_content(
         model="gemini-3.1-flash-lite",
         contents=user_input
     )
-    print("Agent:", response.text)  
+
+    with st.chat_message("assistant"):
+        st.write(response.text)
